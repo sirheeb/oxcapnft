@@ -1,0 +1,46 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --exec ts-node src/index.ts",
+    "build": "echo 'Using pre-built files - no build needed'",
+    "build:mtaa": "tsc",
+    "start": "node dist/index.js",
+    "postbuild": "echo 'Build completed successfully'",
+    "prebuild": "echo 'Skipping prebuild - using pre-built files'",
+    "railway:start": "node dist/index.js",
+    "migrate:nft-status": "node dist/scripts/migrate-nft-status.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@lit-protocol/lit-node-client": "^7.3.1",
+    "@types/jsonwebtoken": "^9.0.10",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "ethers": "^6.15.0",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.19.1",
+    "multer": "^2.0.2",
+    "nft.storage": "^7.2.0",
+    "node-forge": "^1.3.1",
+    "siwe": "^2.3.2",
+    "winston": "^3.18.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.7.2",
+    "@types/node-forge": "^1.3.14",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
