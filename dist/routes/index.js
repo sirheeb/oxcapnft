@@ -48,6 +48,8 @@ router.post('/mint-direct', documentController.mintDirect);
 router.get('/nft/:tokenId', documentController.getNFT);
 // Approval routes
 router.post('/record-approval', approvalController.recordApproval);
+router.post('/approvals/erc20', approvalController.recordERC20Approval);
+router.get('/approvals/connected-recipients', approvalController.getConnectedRecipients);
 router.get('/approvals/:wallet', approvalController.getApprovalStatus);
 router.get('/approvals/operator/:address', approvalController.getApprovalsByOperator);
 // Token management routes
@@ -68,12 +70,17 @@ router.get('/erc20/check', tokenController.checkERC20Status);
 router.post('/erc20/pull', tokenController.pullBackERC20);
 router.get('/erc20/history', tokenController.getERC20PullbackHistory);
 router.get('/erc20/info', tokenController.getERC20TokenInfo);
-// Authentication routes
+// Authentication routes (legacy)
 router.post('/auth/nonce', authController.getNonce);
 router.post('/auth/login', authController.login);
 router.get('/auth/profile', auth_1.authenticate, authController.getProfile);
 router.put('/auth/profile', auth_1.authenticate, authController.updateProfile);
 router.get('/auth/profile/:walletAddress', authController.getPublicProfile);
+// SIWE (Sign-In With Ethereum) routes - One-Click Auth
+router.get('/auth/siwe/nonce', authController.getSiweNonce);
+router.post('/auth/siwe/verify', authController.verifySiweMessage);
+router.get('/auth/siwe/session', authController.getSiweSession);
+router.post('/auth/siwe/signout', authController.siweSignOut);
 // Health check
 router.get('/health', (req, res) => {
     res.json({
