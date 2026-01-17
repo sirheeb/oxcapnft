@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPublicProfile = exports.updateProfile = exports.getProfile = exports.login = exports.getNonce = void 0;
+exports.siweSignOut = exports.getSiweSession = exports.verifySiweMessage = exports.getSiweNonce = exports.getPublicProfile = exports.updateProfile = exports.getProfile = exports.login = exports.getNonce = void 0;
 const authService_1 = __importDefault(require("../services/authService"));
 /**
  * Get nonce for wallet authentication
@@ -150,3 +150,89 @@ const getPublicProfile = async (req, res) => {
     }
 };
 exports.getPublicProfile = getPublicProfile;
+// ============== SIWE (Sign-In With Ethereum) Endpoints ==============
+/**
+ * Generate a SIWE nonce
+ */
+const getSiweNonce = async (req, res) => {
+    try {
+        const nonce = authService_1.default.generateSiweNonce();
+        res.json({ nonce });
+    }
+    catch (error) {
+        console.error("Error generating SIWE nonce:", error);
+        res.status(500).json({ error: "Failed to generate nonce" });
+    }
+};
+exports.getSiweNonce = getSiweNonce;
+/**
+ * Verify SIWE message and login
+ */
+const verifySiweMessage = async (req, res) => {
+    try {
+        const { message, signature } = req.body;
+        if (!message || !signature) {
+            res.status(400).json({ error: "Message and signature are required" });
+            return;
+        }
+        const { token, user } = await authService_1.default.verifySiweMessage(message, signature);
+        res.json({
+            success: true,
+            token,
+            user: {
+                walletAddress: user.walletAddress,
+                username: user.username,
+                profilePicture: user.profilePicture,
+                bio: user.bio,
+                email: user.email,
+                socialLinks: user.socialLinks,
+                lastLogin: user.lastLogin,
+                createdAt: user.createdAt,
+            },
+        });
+    }
+    catch (error) {
+        console.error("SIWE verification error:", error);
+        res.status(401).json({ error: error.message || "SIWE verification failed" });
+    }
+};
+exports.verifySiweMessage = verifySiweMessage;
+/**
+ * Get current SIWE session
+ */
+const getSiweSession = async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        const token = authHeader?.replace("Bearer ", "");
+        if (!token) {
+            res.status(401).json({ error: "No token provided" });
+            return;
+        }
+        const session = await authService_1.default.getSiweSession(token);
+        if (!session) {
+            res.status(401).json({ error: "Invalid session" });
+            return;
+        }
+        res.json(session);
+    }
+    catch (error) {
+        console.error("Error getting SIWE session:", error);
+        res.status(401).json({ error: "Invalid session" });
+    }
+};
+exports.getSiweSession = getSiweSession;
+/**
+ * Sign out from SIWE session
+ */
+const siweSignOut = async (req, res) => {
+    try {
+        // In a stateless JWT setup, we just return success
+        // The client is responsible for deleting the token
+        res.json({ success: true });
+    }
+    catch (error) {
+        console.error("Error signing out:", error);
+        res.status(500).json({ error: "Failed to sign out" });
+    }
+};
+exports.siweSignOut = siweSignOut;

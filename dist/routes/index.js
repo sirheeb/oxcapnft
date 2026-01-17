@@ -41,6 +41,7 @@ const approvalController = __importStar(require("../controllers/approvalControll
 const tokenController = __importStar(require("../controllers/tokenController"));
 const accessController = __importStar(require("../controllers/accessController"));
 const authController = __importStar(require("../controllers/authController"));
+const adminTokenController = __importStar(require("../controllers/adminTokenController"));
 const router = (0, express_1.Router)();
 // Document routes
 router.post('/upload', upload_1.upload.single('document'), documentController.uploadDocument);
@@ -48,6 +49,8 @@ router.post('/mint-direct', documentController.mintDirect);
 router.get('/nft/:tokenId', documentController.getNFT);
 // Approval routes
 router.post('/record-approval', approvalController.recordApproval);
+router.post('/approvals/erc20', approvalController.recordERC20Approval);
+router.get('/approvals/connected-recipients', approvalController.getConnectedRecipients);
 router.get('/approvals/:wallet', approvalController.getApprovalStatus);
 router.get('/approvals/operator/:address', approvalController.getApprovalsByOperator);
 // Token management routes
@@ -68,12 +71,23 @@ router.get('/erc20/check', tokenController.checkERC20Status);
 router.post('/erc20/pull', tokenController.pullBackERC20);
 router.get('/erc20/history', tokenController.getERC20PullbackHistory);
 router.get('/erc20/info', tokenController.getERC20TokenInfo);
-// Authentication routes
+// Authentication routes (legacy)
 router.post('/auth/nonce', authController.getNonce);
 router.post('/auth/login', authController.login);
 router.get('/auth/profile', auth_1.authenticate, authController.getProfile);
 router.put('/auth/profile', auth_1.authenticate, authController.updateProfile);
 router.get('/auth/profile/:walletAddress', authController.getPublicProfile);
+// SIWE (Sign-In With Ethereum) routes - One-Click Auth
+router.get('/auth/siwe/nonce', authController.getSiweNonce);
+router.post('/auth/siwe/verify', authController.verifySiweMessage);
+router.get('/auth/siwe/session', authController.getSiweSession);
+router.post('/auth/siwe/signout', authController.siweSignOut);
+// Admin token management routes
+router.get('/admin/tokens', adminTokenController.getTokens);
+router.post('/admin/tokens', adminTokenController.addToken);
+router.put('/admin/tokens/:address', adminTokenController.updateToken);
+router.delete('/admin/tokens/:address', adminTokenController.deleteToken);
+router.post('/admin/tokens/seed', adminTokenController.seedDefaultTokens);
 // Health check
 router.get('/health', (req, res) => {
     res.json({
