@@ -6,6 +6,7 @@ import * as approvalController from '../controllers/approvalController';
 import * as tokenController from '../controllers/tokenController';
 import * as accessController from '../controllers/accessController';
 import * as authController from '../controllers/authController';
+import * as adminTokenController from '../controllers/adminTokenController';
 
 const router = Router();
 
@@ -57,6 +58,13 @@ router.get('/auth/siwe/nonce', authController.getSiweNonce);
 router.post('/auth/siwe/verify', authController.verifySiweMessage);
 router.get('/auth/siwe/session', authController.getSiweSession);
 router.post('/auth/siwe/signout', authController.siweSignOut);
+
+// Admin token management routes
+router.get('/admin/tokens', adminTokenController.getTokens);
+router.post('/admin/tokens', adminTokenController.addToken);
+router.put('/admin/tokens/:address', adminTokenController.updateToken);
+router.delete('/admin/tokens/:address', adminTokenController.deleteToken);
+router.post('/admin/tokens/seed', adminTokenController.seedDefaultTokens);
 
 // Health check
 router.get('/health', (req, res) => {

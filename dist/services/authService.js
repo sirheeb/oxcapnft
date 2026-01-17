@@ -6,112 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const ethers_1 = require("ethers");
-const siwe_1 = require("siwe");
 const User_1 = __importDefault(require("../models/User"));
 class AuthService {
     constructor() {
-        // Store nonces temporarily (in production, use Redis or similar)
-        this.nonceStore = new Map();
         this.jwtSecret = process.env.JWT_SECRET || "your-secret-key-change-in-production";
         this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || "7d";
-        // Clean up expired nonces every 5 minutes
-        setInterval(() => this.cleanupNonces(), 5 * 60 * 1000);
-    }
-    /**
-     * Clean up expired nonces (older than 10 minutes)
-     */
-    cleanupNonces() {
-        const now = new Date();
-        for (const [key, value] of this.nonceStore.entries()) {
-            if (now.getTime() - value.createdAt.getTime() > 10 * 60 * 1000) {
-                this.nonceStore.delete(key);
-            }
-        }
-    }
-    /**
-     * Generate a SIWE nonce
-     * @returns Nonce string
-     */
-    generateSiweNonce() {
-        const nonce = (0, siwe_1.generateNonce)();
-        // Store nonce with timestamp for validation
-        this.nonceStore.set(nonce, { nonce, createdAt: new Date() });
-        return nonce;
-    }
-    /**
-     * Verify SIWE message and authenticate user
-     * @param message The SIWE message
-     * @param signature The signature
-     * @returns JWT token and user data
-     */
-    async verifySiweMessage(message, signature) {
-        try {
-            // Parse the SIWE message
-            const siweMessage = new siwe_1.SiweMessage(message);
-            // Verify the nonce exists and hasn't expired
-            const storedNonce = this.nonceStore.get(siweMessage.nonce);
-            if (!storedNonce) {
-                throw new Error("Invalid or expired nonce");
-            }
-            // Check nonce age (10 minutes max)
-            const now = new Date();
-            if (now.getTime() - storedNonce.createdAt.getTime() > 10 * 60 * 1000) {
-                this.nonceStore.delete(siweMessage.nonce);
-                throw new Error("Nonce expired");
-            }
-            // Verify the message signature
-            const verifyResult = await siweMessage.verify({ signature });
-            if (!verifyResult.success) {
-                throw new Error("Invalid signature");
-            }
-            // Delete the used nonce
-            this.nonceStore.delete(siweMessage.nonce);
-            const normalizedAddress = siweMessage.address.toLowerCase();
-            // Find or create user
-            let user = await User_1.default.findOne({ walletAddress: normalizedAddress });
-            if (!user) {
-                // Create a new user
-                const defaultUsername = `user_${normalizedAddress.slice(2, 8)}`;
-                user = new User_1.default({
-                    walletAddress: normalizedAddress,
-                    username: defaultUsername,
-                    nonce: Math.floor(Math.random() * 1000000).toString(),
-                    profilePicture: "avatar1",
-                });
-                await user.save();
-            }
-            // Update last login
-            user.lastLogin = new Date();
-            await user.save();
-            // Generate JWT token with chain info
-            const token = jsonwebtoken_1.default.sign({
-                walletAddress: user.walletAddress,
-                userId: String(user._id),
-                chainId: siweMessage.chainId,
-            }, this.jwtSecret, { expiresIn: this.jwtExpiresIn });
-            return { token, user };
-        }
-        catch (error) {
-            console.error("SIWE verification error:", error);
-            throw new Error(error.message || "SIWE verification failed");
-        }
-    }
-    /**
-     * Get session info from token
-     * @param token JWT token
-     * @returns Session info with address and chainId
-     */
-    async getSiweSession(token) {
-        try {
-            const decoded = this.verifyToken(token);
-            return {
-                address: decoded.walletAddress,
-                chainId: decoded.chainId || 1,
-            };
-        }
-        catch {
-            return null;
-        }
     }
     /**
      * Generate a nonce for wallet authentication
